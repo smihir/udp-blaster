@@ -114,6 +114,8 @@ void run_blastee(char* port, int echo){
 	}
 
 	while(1){
+
+
 		addrlen=sizeof(struct sockaddr);
 		recvfrom(socketfd, buffer, BUFFER_SIZE, flag, &src_addr, &addrlen);
 
