@@ -14,7 +14,7 @@
 
 #define BUFFER_SIZE 1500
 
-void run_blastee(char*  port);
+void run_blastee(char*  port, int echo);
 
 
 void blastee_usage(void) {
@@ -51,14 +51,14 @@ int main(int argc, char *argv[])
             }
     }
 
-    run_blastee(port_str);
+    run_blastee(port_str, echo);
 
     printf("Echo: %s, port: %lu\n", echo == 1 ? "yes": "no", port);
     return 0;
 }
 
 
-void run_blastee(char* port){
+void run_blastee(char* port, int echo){
 
 	struct addrinfo hints, *res, *p;
 	int status;
@@ -66,6 +66,7 @@ void run_blastee(char* port){
 	int socketfd;
 	char *buffer=(char *)malloc(sizeof(char)*BUFFER_SIZE);
 	int flag=0;
+//	unsigned long pktlen;
 
 	struct sockaddr src_addr;
 	socklen_t addrlen;
@@ -113,8 +114,22 @@ void run_blastee(char* port){
 	}
 
 	while(1){
+		addrlen=sizeof(struct sockaddr);
 		recvfrom(socketfd, buffer, BUFFER_SIZE, flag, &src_addr, &addrlen);
-		printf("Recived packet from: %s\n",buffer);
+
+
+		printf("Recived packet from: %s::%d\n",buffer,((struct sockaddr_in *)&src_addr)->sin_family);
+		inet_ntop(AF_INET,&(((struct sockaddr_in *)&src_addr)->sin_addr), ipstr, sizeof ipstr);
+		printf("IP: %s\n", ipstr);
+		if(echo == 1){
+			int ret=sendto(socketfd, buffer, BUFFER_SIZE, flag, &src_addr, addrlen);
+			if(ret == -1){
+				perror("Send error: ");
+			}
+			printf("ECHO: %s\n",buffer);
+
+		}
+
 	}
 
 	freeaddrinfo(res);

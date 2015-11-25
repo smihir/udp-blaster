@@ -8,11 +8,11 @@
 #ifndef PACKET_H_
 #define PACKET_H_
 
-struct packet_header __attribute__((__packed__)){
+struct packet_header {
 	char type;
 	unsigned int sequence;
 	unsigned int length;
-};
+}__attribute__((__packed__));
 
 
 
