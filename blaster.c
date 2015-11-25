@@ -8,6 +8,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include "packet.h"
 
 #define BUFFER_SIZE 1500
 
@@ -125,7 +126,8 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen, int rate){
 //		perror("Socket binding failed");
 //		return;
 //	}
-	useconds_t time=0.5;
+	useconds_t time=1000000 / rate;
+//	printf()
 	memcpy(buffer,"test",5);
 	while(numpkts--){
 		int ret;
@@ -135,7 +137,7 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen, int rate){
 		}
 		printf("Send packet to: %s\n",ipstr);
 		usleep(time);
-		time+=1000.5;
+		//time+=1000.5;
 	}
 
 
