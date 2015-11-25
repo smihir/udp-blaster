@@ -1,7 +1,7 @@
 CC = gcc
 CSCOPE = cscope
-CFLAGS += -Wall
-#CFLAGS += -Wall -Werror
+#CFLAGS += -Wall
+CFLAGS += -Wall -Werror
 
 BLASTEE-OBJS := blastee.o \
 

@@ -65,7 +65,7 @@ void run_blastee(char* port){
 	char ipstr[INET_ADDRSTRLEN];
 	int socketfd;
 	char *buffer=(char *)malloc(sizeof(char)*BUFFER_SIZE);
-	int flag=1;
+	int flag=0;
 
 	struct sockaddr src_addr;
 	socklen_t addrlen;
@@ -103,6 +103,10 @@ void run_blastee(char* port){
 	}
 
 	socketfd=socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+	if(socketfd < 0){
+		perror("Socket open failed: ");
+	}
+
 	if(bind(socketfd, p->ai_addr, p->ai_addrlen)!=0){
 		perror("Socket binding failed");
 		return;

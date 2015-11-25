@@ -3,3 +3,7 @@
 blastee
 blaster
 cscope*
+Debug
+.settings
+.cproject
+.project

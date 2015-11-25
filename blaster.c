@@ -11,7 +11,7 @@
 
 #define BUFFER_SIZE 1500
 
-void run_blaster(char* hostname, char* port);
+void run_blaster(char* hostname, char* port, int numpkts, int pktlen, int rate);
 
 
 void blaster_usage(void) {
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
             "startseq: %lu, pktlen: %lu, echo: %s\n", hostname, port, rate,
             numpkts, startseq, pktlen, echo == 1 ? "yes": "no");
 
-    run_blaster(hostname, port_str);
+    run_blaster(hostname, port_str, numpkts, pktlen, rate);
 
 
     free(hostname);
@@ -77,18 +77,14 @@ int main(int argc, char *argv[])
 }
 
 
-void run_blaster(char* hostname, char *port){
+void run_blaster(char* hostname, char *port, int numpkts, int pktlen, int rate){
 
 	struct addrinfo hints, *res, *p;
 	int status;
 	char ipstr[INET_ADDRSTRLEN];
 	int socketfd;
-	char *buffer=(char *)malloc(sizeof(char)*BUFFER_SIZE);
-	int flag=1;
-
-	struct sockaddr_in src_addr;
-	socklen_t addrlen;
-
+	char *buffer=(char *)malloc(sizeof(char)*pktlen);
+	int flag=0;
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_INET; // AF_INET or AF_INET6 to force version
@@ -122,17 +118,24 @@ void run_blaster(char* hostname, char *port){
 	}
 
 	socketfd=socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-//	if(bind(socketfd, p->ai_addr, p->ai_addrlen)!=0){
+	if(socketfd < 0 ){
+		perror("Socket open failed: ");
+	}
+	//	if(bind(socketfd, p->ai_addr, p->ai_addrlen)!=0){
 //		perror("Socket binding failed");
 //		return;
 //	}
-
+	useconds_t time=0.5;
 	memcpy(buffer,"test",5);
-	while(1){
-
-		sendto(socketfd, buffer, BUFFER_SIZE, flag, &p->ai_addr, &p->ai_addrlen);
+	while(numpkts--){
+		int ret;
+		ret=sendto(socketfd, buffer, pktlen, flag, p->ai_addr, p->ai_addrlen);
+		if(ret == -1){
+			perror("Send error: ");
+		}
 		printf("Send packet to: %s\n",ipstr);
-		sleep(5);
+		usleep(time);
+		time+=1000.5;
 	}
 
 
