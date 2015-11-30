@@ -3,7 +3,9 @@
 blastee
 blaster
 cscope*
-Debug
+Debug/*
 .settings
 .cproject
 .project
+.idea/*
+CMakeLists.txt
