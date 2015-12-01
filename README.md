@@ -5,5 +5,5 @@
 2. Create packet header()
 
 	2.1 Generate sequence number
-	
-	2.2 Generate End packet. 
+
+	2.2 Generate End packet.
