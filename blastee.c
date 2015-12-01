@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include <sys/errno.h>
 
-#define BUFFER_SIZE 1500
+#define BUFFER_SIZE 50 * 1024 //50KB
 #define BLASTEE_RX_TIMEOUT 5
 
 void blastee_usage(void)
@@ -142,6 +142,10 @@ int main(int argc, char *argv[])
         switch (ch) {
             case 'p':
                 port = strtoul(optarg, NULL, 10);
+                if (port <= 1024 || port > 65536) {
+                    printf("Invalid Port\n");
+                    blastee_usage();
+                }
                 port_str = strdup(optarg);
                 break;
             case 'c':

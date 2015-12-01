@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include "packet.h"
 
-#define BUFFER_SIZE 1500
+#define BUFFER_SIZE 50 * 1024 //50KB
 #define BLASTER_RX_TIMEOUT 5
 int rx = 1;
 
@@ -101,7 +101,7 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
 
     socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     if (socketfd < 0) {
-            perror("Socket open failed: ");
+        perror("Socket open failed: ");
     }
 
     memcpy(buffer,"test",5);
@@ -150,6 +150,10 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 port = strtoul(optarg, NULL, 10);
+                if (port <= 1024 || port > 65536) {
+                    printf("Invalid Port\n");
+                    blaster_usage();
+                }
                 port_str=strdup(optarg);
                 break;
             case 'r':
