@@ -24,6 +24,30 @@ void blastee_usage(void)
     exit(1);
 }
 
+double elapsed_time(struct timeval *tv_first, struct timeval *tv_end)
+{
+    double elapsed_msec;
+
+    elapsed_msec = (tv_end->tv_sec - tv_first->tv_sec) * 1000;
+    elapsed_msec += (tv_end->tv_usec - tv_first->tv_usec) / 1000;
+
+    return elapsed_msec;
+}
+
+void print_summarystats(struct timeval *tv_first, struct timeval *tv_end,
+                        unsigned int numpkts_rx, unsigned int numbytes_rx)
+{
+    double elapsed_msec;
+
+    elapsed_msec = elapsed_time(tv_first, tv_end);
+
+    printf("packets received: %u \nbytes_received: %u \n"
+           "average packets per second: %f \naverage bytes per second: %f \n"
+           "duration (ms): %f \n",
+           numpkts_rx, numbytes_rx, numpkts_rx / (elapsed_msec / 1000),
+           numbytes_rx / (elapsed_msec / 1000), elapsed_msec);
+}
+
 void run_blastee(char* port, unsigned long int echo)
 {
     struct addrinfo hints, *res, *p;
@@ -36,6 +60,8 @@ void run_blastee(char* port, unsigned long int echo)
     struct sockaddr src_addr;
     socklen_t addrlen;
     int do_break = 0;
+    unsigned int numpkts_rx = 0, numbytes_rx = 0;
+    struct timeval tv1, tv_first, tv_end;
 
     buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     if (buffer == NULL) {
@@ -89,6 +115,11 @@ void run_blastee(char* port, unsigned long int echo)
         return;
     }
 
+    // in case test ends without receiving any packet
+    // we should print positive test runtime while
+    // printing the summay stats
+    gettimeofday(&tv_first, NULL);
+
     while(1) {
         int pktlen;
         struct sockaddr_in *sin;
@@ -96,13 +127,20 @@ void run_blastee(char* port, unsigned long int echo)
         void *addr;
         struct packet_header *hdr;
         char *data;
-        struct timeval tv1;
         struct tm *tm;
 
         pktlen = recvfrom(socketfd, buffer, BUFFER_SIZE, flag, &src_addr, &addrlen);
 
         if (pktlen != -1) {
             gettimeofday(&tv1, NULL);
+
+            numpkts_rx++;
+            numbytes_rx += pktlen;
+
+            if (numpkts_rx == 1) {
+                tv_first = tv1;
+            }
+
             sin = (struct sockaddr_in *)&src_addr;
 
             if (p->ai_family == AF_INET) {
@@ -140,6 +178,11 @@ void run_blastee(char* port, unsigned long int echo)
 
         //SPEC: exit if no packet for 5 secs
         if (pktlen == -1 || do_break == 1) {
+
+            gettimeofday(&tv_end, NULL);
+
+            print_summarystats(&tv_first, &tv_end, numpkts_rx, numbytes_rx);
+
             break;
         }
     }
