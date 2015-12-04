@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -184,19 +185,35 @@ int main(int argc, char *argv[])
                 break;
             case 'r':
                 rate = strtoul(optarg, NULL, 10);
+                if (rate == 0 && errno == EINVAL) {
+                    blaster_usage();
+                }
                 break;
             case 'n':
                 numpkts = strtoul(optarg, NULL, 10);
+                if (numpkts == 0 && errno == EINVAL) {
+                    blaster_usage();
+                }
                 break;
             case 'q':
                 startseq = strtoul(optarg, NULL, 10);
+                if (startseq == 0 && errno == EINVAL) {
+                    blaster_usage();
+                }
                 break;
             case 'l':
                 pktlen = strtoul(optarg, NULL, 10);
+                if (pktlen == 0 && errno == EINVAL) {
+                    blaster_usage();
+                }
                 break;
             case 'c':
                 echo = strtoul(optarg, NULL, 10);
                 if (echo != 0 && echo != 1) {
+                    blaster_usage();
+                }
+
+                if (echo == 0 && errno == EINVAL) {
                     blaster_usage();
                 }
                 break;

@@ -216,6 +216,10 @@ int main(int argc, char *argv[])
                 if (echo != 0 && echo != 1) {
                     blastee_usage();
                 }
+
+                if (echo == 0 && errno == EINVAL) {
+                    blastee_usage();
+                }
                 break;
             case '?':
             default:
