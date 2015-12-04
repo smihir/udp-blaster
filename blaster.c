@@ -130,9 +130,11 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
         } else {
             hdr->type = 'D';
         }
-        hdr->sequence = htonl(seq++);
-        hdr->length = pktlen;
+        hdr->sequence = htonl(seq);
+        hdr->length = htonl(pktlen);
         data = buffer + sizeof(struct packet_header);
+
+        seq += pktlen;
 
         ret = sendto(socketfd, buffer, pktlen + sizeof(struct packet_header),
                      flag, p->ai_addr, p->ai_addrlen);
@@ -208,7 +210,8 @@ int main(int argc, char *argv[])
             "startseq: %lu, pktlen: %lu, echo: %s\n", hostname, port, rate,
             numpkts, startseq, pktlen, echo == 1 ? "yes": "no");
 
-    run_blaster(hostname, port_str, numpkts, pktlen, rate, echo, startseq);
+    // One extra packet for END
+    run_blaster(hostname, port_str, numpkts + 1, pktlen, rate, echo, startseq);
 
     free(hostname);
 
