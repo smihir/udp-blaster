@@ -177,7 +177,7 @@ void run_blastee(char* port, unsigned long int echo)
         }
 
         //SPEC: exit if no packet for 5 secs
-        if (pktlen == -1 || do_break == 1) {
+        if ((pktlen == -1 && errno == EAGAIN) || do_break == 1) {
 
             gettimeofday(&tv_end, NULL);
 
