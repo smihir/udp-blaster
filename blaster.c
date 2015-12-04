@@ -45,15 +45,23 @@ void *blaster_echo_rx(void *arg)
             printf("rx packet timeout\n");
         else if (pktlen == -1)
             perror("rx packet error: ");
-        else
-            printf("rx packet from: \n");
+        else {
+            struct packet_header *hdr;
+            char *data;
+
+            hdr = (struct packet_header *)buffer;
+            data = buffer + sizeof(struct packet_header);
+
+            printf("echo %u: %02x %02x %02x %02x\n",ntohl(hdr->sequence), data[0],
+                                               data[1], data[2], data[3]);
+        }
     }
 
     return NULL;
 }
 
 void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
-        int rate, int echo)
+        int rate, int echo, unsigned int seq)
 {
     struct addrinfo hints, *res, *p;
     int status;
@@ -64,7 +72,8 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
     useconds_t time = 1000000 / rate;
     pthread_t rx_thread;
 
-    buffer = (char *)malloc(sizeof(char) * pktlen);
+    buffer = (char *)malloc(sizeof(char) * pktlen +
+                            sizeof(struct packet_header));
     if (buffer == NULL) {
         printf("Memory allocation failed\n");
         exit(1);
@@ -104,7 +113,7 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
         perror("Socket open failed: ");
     }
 
-    memcpy(buffer,"test",5);
+    //memcpy(buffer,"test",5);
 
     if (echo == 1) {
         pthread_create(&rx_thread, NULL, blaster_echo_rx, &socketfd);
@@ -112,13 +121,28 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
 
     while(numpkts--) {
         int ret;
+        struct packet_header *hdr;
+        char *data;
 
-        ret = sendto(socketfd, buffer, pktlen, flag, p->ai_addr, p->ai_addrlen);
-        if(ret == -1){
-                perror("Send error: ");
+        hdr = (struct packet_header *)buffer;
+        if (numpkts == 0) {
+            hdr->type = 'E';
+        } else {
+            hdr->type = 'D';
+        }
+        hdr->sequence = htonl(seq++);
+        hdr->length = pktlen;
+        data = buffer + sizeof(struct packet_header);
+
+        ret = sendto(socketfd, buffer, pktlen + sizeof(struct packet_header),
+                     flag, p->ai_addr, p->ai_addrlen);
+        if(ret == -1) {
+            perror("Send error: ");
+        } else {
+            printf("%u: %02x %02x %02x %02x\n",ntohl(hdr->sequence), data[0],
+                                               data[1], data[2], data[3]);
         }
 
-        printf("Send packet to: %s\n",ipstr);
         usleep(time);
     }
 
@@ -184,7 +208,7 @@ int main(int argc, char *argv[])
             "startseq: %lu, pktlen: %lu, echo: %s\n", hostname, port, rate,
             numpkts, startseq, pktlen, echo == 1 ? "yes": "no");
 
-    run_blaster(hostname, port_str, numpkts, pktlen, rate, echo);
+    run_blaster(hostname, port_str, numpkts, pktlen, rate, echo, startseq);
 
     free(hostname);
 

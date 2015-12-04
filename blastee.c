@@ -11,9 +11,12 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <sys/errno.h>
+#include <sys/time.h>
+#include "packet.h"
 
 #define BUFFER_SIZE 50 * 1024 //50KB
 #define BLASTEE_RX_TIMEOUT 5
+#define MAX_TIME 10
 
 void blastee_usage(void)
 {
@@ -32,6 +35,7 @@ void run_blastee(char* port, unsigned long int echo)
     struct timeval tv;
     struct sockaddr src_addr;
     socklen_t addrlen;
+    int do_break = 0;
 
     buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     if (buffer == NULL) {
@@ -90,14 +94,15 @@ void run_blastee(char* port, unsigned long int echo)
         struct sockaddr_in *sin;
         char *ipver;
         void *addr;
+        struct packet_header *hdr;
+        char *data;
+        struct timeval tv1;
+        struct tm *tm;
 
         pktlen = recvfrom(socketfd, buffer, BUFFER_SIZE, flag, &src_addr, &addrlen);
 
-        if (pktlen != 1) {
-            printf("Recived packet from: %s\n",buffer);
-        }
-
-        if (echo == 1 && pktlen != -1) {
+        if (pktlen != -1) {
+            gettimeofday(&tv1, NULL);
             sin = (struct sockaddr_in *)&src_addr;
 
             if (p->ai_family == AF_INET) {
@@ -111,8 +116,22 @@ void run_blastee(char* port, unsigned long int echo)
             }
 
             inet_ntop(sin->sin_family, addr, ipstr, sizeof ipstr);
-            printf("%s: %s\n", ipver, ipstr);
 
+            hdr = (struct packet_header *)buffer;
+            data = buffer + sizeof(struct packet_header);
+            tm = localtime(&tv1.tv_sec);
+
+            printf("%s %s %d %u %d:%02d:%02d.%06d: %02x %02x %02x %02x\n",ipstr,
+                   port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
+                   tm->tm_min, tm->tm_sec, tv1.tv_usec, data[0], data[1],
+                   data[2], data[3]);
+
+            if (hdr->type == 'E')
+                do_break = 1;
+            hdr->type = 'C';
+        }
+
+        if (echo == 1 && pktlen != -1) {
             addrlen = sizeof(src_addr);
             if (sendto(socketfd, buffer, pktlen, flag, &src_addr, addrlen) == -1) {
                 perror("Send Error:");
@@ -120,8 +139,9 @@ void run_blastee(char* port, unsigned long int echo)
         }
 
         //SPEC: exit if no packet for 5 secs
-        if (pktlen == -1 && errno == EAGAIN)
+        if (pktlen == -1 || do_break == 1) {
             break;
+        }
     }
 
     freeaddrinfo(res);
