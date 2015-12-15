@@ -1,7 +1,7 @@
 CC = gcc
 CSCOPE = cscope
-#CFLAGS += -Wall
-CFLAGS += -Wall -Werror -lpthread
+CFLAGS += -Wall -Werror
+LDFLAGS += -lpthread
 
 BLASTEE-OBJS := blastee.o \
 
@@ -15,10 +15,10 @@ endif
 all: blastee blaster
 
 blastee: blastee.o
-	$(CC) $(CFLAGS) $(BLASTEE-OBJS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BLASTEE-OBJS) -o $@
 
 blaster: blaster.o
-	$(CC) $(CFLAGS) $(BLASTER-OBJS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(BLASTER-OBJS) -o $@
 
 %.o: %.c *.h
 	$(CC) $(CFLAGS) -o $@ -c $<
