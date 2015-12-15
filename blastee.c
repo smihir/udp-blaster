@@ -63,7 +63,7 @@ void run_blastee(char* port, unsigned long int echo)
 {
     struct addrinfo hints, *res;//, *p;
     int status;
-    char ipstr[INET_ADDRSTRLEN];
+    char ipstr[INET_ADDRSTRLEN] = "0.0.0.0";
     int socketfd;
     char *buffer;
     int flag = 0;
@@ -75,13 +75,11 @@ void run_blastee(char* port, unsigned long int echo)
     unsigned int numpkts_rx = 0, numbytes_rx = 0;
     struct timeval tv1, tv_first, tv_end;
     char preamble[50];
-
     struct sockaddr_in myaddr;
+
     myaddr.sin_addr.s_addr=INADDR_ANY;
     myaddr.sin_family=AF_INET;
     myaddr.sin_port=htons(atoi(port));
-
-
 
     buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     if (buffer == NULL) {
@@ -97,33 +95,7 @@ void run_blastee(char* port, unsigned long int echo)
         printf("getaddrinfo: %s\n", gai_strerror(status));
         exit(1);
     }
-	/*
 
-    for (p = res; p != NULL; p = p->ai_next) {
-        void *addr;
-        char *ipver;
-
-        if (p->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *) p->ai_addr;
-            addr = &(ipv4->sin_addr);
-            ipver = "IPv4";
-        } else {
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) p->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            ipver = "IPv6";
-        }
-
-        // convert the IP to a string and print it:
-        inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-        printf("%s: %s\n", ipver, ipstr);
-        break;
-    }*/
-
-    //inet_pton(AF_INET,"128.105.37.154", &(myaddr.sin_addr));
-
-
-
-    //socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
     socketfd = socket(PF_INET, SOCK_DGRAM, 0);
     if (socketfd < 0) {
         perror("Socket open failed: ");
@@ -174,17 +146,11 @@ void run_blastee(char* port, unsigned long int echo)
             sin = (struct sockaddr_in *)&src_addr;
 
 		
-            //if (p->ai_family == AF_INET) {
-                struct sockaddr_in *ipv4 = (struct sockaddr_in *) &src_addr;
-                addr = &(ipv4->sin_addr);
-                ipver = "IPv4";
-            //} else {
-             //   struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) &src_addr;
-            //    addr = &(ipv6->sin6_addr);
-           //     ipver = "IPv6";
-           // }
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *) &src_addr;
+            addr = &(ipv4->sin_addr);
+            ipver = "IPv4";
 		
-            inet_ntop(sin->sin_family, addr, ipstr, sizeof ipstr);
+            inet_ntop(sin->sin_family, addr, ipstr, sizeof(ipstr));
 		
             hdr = (struct packet_header *)buffer;
             data = buffer + sizeof(struct packet_header);
