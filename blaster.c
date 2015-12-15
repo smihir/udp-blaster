@@ -158,9 +158,11 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
 
     rx = 0;
 
+#if defined(WAIT_FOR_RX)
     if (echo == 1) {
         pthread_join(rx_thread, NULL);
     }
+#endif
 
     free(buffer);
 }
