@@ -186,7 +186,6 @@ void run_blastee(char* port, unsigned long int echo)
             if (hdr->type == 'E'){
 		numpkts_rx--;	                
 		do_break = 1;
-		numbytes_rx -= pktlen;
 	    }	
             hdr->type = 'C';
         }
