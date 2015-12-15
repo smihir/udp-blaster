@@ -42,11 +42,15 @@ void *blaster_echo_rx(void *arg)
 
         pktlen = recvfrom(sockfd, buffer, BUFFER_SIZE, flag, &src_addr, &addrlen);
 
-        if (pktlen == 0)
+        if (pktlen == 0) {
+#if defined(DEBUG)
             printf("rx packet timeout\n");
-        else if (pktlen == -1)
-            perror("rx packet error: ");
-        else {
+#endif
+        } else if (pktlen == -1) {
+#if defined(DEBUG)
+            perror("rx packet error");
+#endif
+        } else {
             struct packet_header *hdr;
             char *data;
 
