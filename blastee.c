@@ -179,15 +179,15 @@ void run_blastee(char* port, unsigned long int echo)
             snprintf(preamble, sizeof(preamble),
                      "%s %s %d %u %d:%02d:%02d.%06ld: ",
                      ipstr, port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
-                     tm->tm_min, tm->tm_sec, tv1.tv_usec);
+                     tm->tm_min, tm->tm_sec, (long int)tv1.tv_usec);
             print_data(preamble, data, ntohl(hdr->length) < 4 ?
                                        ntohl(hdr->length) : 4);
 
             if (hdr->type == 'E'){
-		numpkts_rx--;	                
-		do_break = 1;
-		numbytes_rx -= pktlen;
-	    }	
+		        numpkts_rx--;	                
+		        numbytes_rx -= pktlen;
+		        do_break = 1;
+	        }	
             hdr->type = 'C';
         }
 
