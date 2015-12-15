@@ -22,6 +22,17 @@ void blaster_usage(void)
     exit(1);
 }
 
+void print_data(char *preamble, char *data, int len)
+{
+    int i;
+
+    printf("%s", preamble);
+    for (i = 0; i < len; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+}
+
 void *blaster_echo_rx(void *arg)
 {
     int sockfd = *(int *)arg;
@@ -30,6 +41,7 @@ void *blaster_echo_rx(void *arg)
     struct sockaddr src_addr;
     socklen_t addrlen;
     struct timeval tv;
+    char preamble[20];
 
     tv.tv_sec = BLASTER_RX_TIMEOUT;
     tv.tv_usec = 0;
@@ -57,8 +69,10 @@ void *blaster_echo_rx(void *arg)
             hdr = (struct packet_header *)buffer;
             data = buffer + sizeof(struct packet_header);
 
-            printf("echo %u: %02x %02x %02x %02x\n",ntohl(hdr->sequence), data[0],
-                                               data[1], data[2], data[3]);
+            snprintf(preamble, sizeof(preamble), "echo %u: ",
+                     ntohl(hdr->sequence));
+            print_data(preamble, data, ntohl(hdr->length) < 4 ?
+                                       ntohl(hdr->length) : 4);
         }
     }
 
@@ -77,6 +91,7 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
     int sz = BUFFER_SIZE;
     useconds_t time = 1000000 / rate;
     pthread_t rx_thread;
+    char preamble[20];
 
     buffer = (char *)malloc(sizeof(char) * pktlen +
                             sizeof(struct packet_header));
@@ -149,8 +164,10 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
         if(ret == -1) {
             perror("Send error: ");
         } else {
-            printf("%u: %02x %02x %02x %02x\n",ntohl(hdr->sequence), data[0],
-                                               data[1], data[2], data[3]);
+            snprintf(preamble, sizeof(preamble), "%u: ",
+                     ntohl(hdr->sequence));
+            print_data(preamble, data, ntohl(hdr->length) < 4 ?
+                                       ntohl(hdr->length) : 4);
         }
 
         usleep(time);

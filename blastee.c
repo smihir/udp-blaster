@@ -24,6 +24,17 @@ void blastee_usage(void)
     exit(1);
 }
 
+void print_data(char *preamble, char *data, int len)
+{
+    int i;
+
+    printf("%s", preamble);
+    for (i = 0; i < len; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("\n");
+}
+
 double elapsed_time(struct timeval *tv_first, struct timeval *tv_end)
 {
     double elapsed_msec;
@@ -63,6 +74,7 @@ void run_blastee(char* port, unsigned long int echo)
     int do_break = 0;
     unsigned int numpkts_rx = 0, numbytes_rx = 0;
     struct timeval tv1, tv_first, tv_end;
+    char preamble[50];
 
     buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     if (buffer == NULL) {
@@ -164,10 +176,12 @@ void run_blastee(char* port, unsigned long int echo)
             data = buffer + sizeof(struct packet_header);
             tm = localtime(&tv1.tv_sec);
 
-            printf("%s %s %d %u %d:%02d:%02d.%06d: %02x %02x %02x %02x\n",ipstr,
-                   port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
-                   tm->tm_min, tm->tm_sec, tv1.tv_usec, data[0], data[1],
-                   data[2], data[3]);
+            snprintf(preamble, sizeof(preamble),
+                     "%s %s %d %u %d:%02d:%02d.%06d: ",
+                     ipstr, port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
+                     tm->tm_min, tm->tm_sec, tv1.tv_usec);
+            print_data(preamble, data, ntohl(hdr->length) < 4 ?
+                                       ntohl(hdr->length) : 4);
 
             if (hdr->type == 'E')
                 do_break = 1;
