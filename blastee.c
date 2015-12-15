@@ -14,7 +14,7 @@
 #include <sys/time.h>
 #include "packet.h"
 
-#define BUFFER_SIZE 50 * 1024 //50KB
+#define BUFFER_SIZE (50 * 1024) + 9 //50KB
 #define BLASTEE_RX_TIMEOUT 5
 #define MAX_TIME 10
 
@@ -56,6 +56,7 @@ void run_blastee(char* port, unsigned long int echo)
     int socketfd;
     char *buffer;
     int flag = 0;
+    int sz = BUFFER_SIZE;
     struct timeval tv;
     struct sockaddr src_addr;
     socklen_t addrlen;
@@ -107,6 +108,10 @@ void run_blastee(char* port, unsigned long int echo)
     tv.tv_sec = BLASTEE_RX_TIMEOUT;
     tv.tv_usec = 0;
     if (setsockopt(socketfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("Error");
+    }
+
+    if (setsockopt(socketfd, SOL_SOCKET, SO_SNDBUF, &sz, sizeof(sz)) < 0) {
         perror("Error");
     }
 

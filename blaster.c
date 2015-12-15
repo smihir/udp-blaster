@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include "packet.h"
 
-#define BUFFER_SIZE 50 * 1024 //50KB
+#define BUFFER_SIZE (50 * 1024) + 9 //50KB
 #define BLASTER_RX_TIMEOUT 5
 int rx = 1;
 
@@ -70,6 +70,7 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
     int socketfd;
     char *buffer;
     int flag=0;
+    int sz = BUFFER_SIZE;
     useconds_t time = 1000000 / rate;
     pthread_t rx_thread;
 
@@ -114,7 +115,9 @@ void run_blaster(char* hostname, char *port, int numpkts, int pktlen,
         perror("Socket open failed: ");
     }
 
-    //memcpy(buffer,"test",5);
+    if (setsockopt(socketfd, SOL_SOCKET, SO_SNDBUF, &sz, sizeof(sz)) < 0) {
+        perror("Error");
+    }
 
     if (echo == 1) {
         pthread_create(&rx_thread, NULL, blaster_echo_rx, &socketfd);
