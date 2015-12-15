@@ -46,17 +46,17 @@ double elapsed_time(struct timeval *tv_first, struct timeval *tv_end)
 }
 
 void print_summarystats(struct timeval *tv_first, struct timeval *tv_end,
-                        unsigned int numpkts_rx, unsigned int numbytes_rx)
+        unsigned int numpkts_rx, unsigned int numbytes_rx)
 {
     double elapsed_msec;
 
     elapsed_msec = elapsed_time(tv_first, tv_end);
 
     printf("packets received: %u \nbytes_received: %u \n"
-           "average packets per second: %f \naverage bytes per second: %f \n"
-           "duration (ms): %f \n",
-           numpkts_rx, numbytes_rx, numpkts_rx / (elapsed_msec / 1000),
-           numbytes_rx / (elapsed_msec / 1000), elapsed_msec);
+            "average packets per second: %f \naverage bytes per second: %f \n"
+            "duration (ms): %f \n",
+            numpkts_rx, numbytes_rx, numpkts_rx / (elapsed_msec / 1000),
+            numbytes_rx / (elapsed_msec / 1000), elapsed_msec);
 }
 
 void run_blastee(char* port, unsigned long int echo)
@@ -75,6 +75,13 @@ void run_blastee(char* port, unsigned long int echo)
     unsigned int numpkts_rx = 0, numbytes_rx = 0;
     struct timeval tv1, tv_first, tv_end;
     char preamble[50];
+
+    struct sockaddr_in myaddr;
+    myaddr.sin_addr.s_addr=INADDR_ANY;
+    myaddr.sin_family=AF_INET;
+    myaddr.sin_port=htons(atoi(port));
+
+
 
     buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
     if (buffer == NULL) {
@@ -111,7 +118,12 @@ void run_blastee(char* port, unsigned long int echo)
         break;
     }
 
-    socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+    //inet_pton(AF_INET,"128.105.37.154", &(myaddr.sin_addr));
+
+
+
+    //socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+    socketfd = socket(PF_INET, SOCK_DGRAM, 0);
     if (socketfd < 0) {
         perror("Socket open failed: ");
     }
@@ -127,14 +139,14 @@ void run_blastee(char* port, unsigned long int echo)
         perror("Error");
     }
 
-    if (bind(socketfd, p->ai_addr, p->ai_addrlen) != 0) {
+    if (bind(socketfd,(struct sockaddr *) &myaddr, sizeof(myaddr)) != 0) {
         perror("Socket binding failed");
         return;
     }
 
     // in case test ends without receiving any packet
     // we should print positive test runtime while
-    // printing the summay stats
+    // printing the summary stats
     gettimeofday(&tv_first, NULL);
 
     while(1) {
@@ -177,17 +189,17 @@ void run_blastee(char* port, unsigned long int echo)
             tm = localtime(&tv1.tv_sec);
 
             snprintf(preamble, sizeof(preamble),
-                     "%s %s %d %u %d:%02d:%02d.%06ld: ",
-                     ipstr, port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
-                     tm->tm_min, tm->tm_sec, (long int)tv1.tv_usec);
+                    "%s %s %d %u %d:%02d:%02d.%06ld: ",
+                    ipstr, port, pktlen, ntohl(hdr->sequence), tm->tm_hour,
+                    tm->tm_min, tm->tm_sec, (long int)tv1.tv_usec);
             print_data(preamble, data, ntohl(hdr->length) < 4 ?
-                                       ntohl(hdr->length) : 4);
+                    ntohl(hdr->length) : 4);
 
             if (hdr->type == 'E'){
-		        numpkts_rx--;	                
-		        numbytes_rx -= pktlen;
-		        do_break = 1;
-	        }	
+                numpkts_rx--;	                
+                numbytes_rx -= pktlen;
+                do_break = 1;
+            }	
             hdr->type = 'C';
         }
 
@@ -246,7 +258,7 @@ int main(int argc, char *argv[])
             case '?':
             default:
                 blastee_usage();
-            }
+        }
     }
 
     printf("Echo: %s, port: %lu\n", echo == 1 ? "yes": "no", port);
