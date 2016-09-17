@@ -125,7 +125,6 @@ void run_blastee(char* port, unsigned long int echo)
     while(1) {
         int pktlen;
         struct sockaddr_in *sin;
-        char *ipver;
         void *addr;
         struct packet_header *hdr;
         char *data;
@@ -148,7 +147,6 @@ void run_blastee(char* port, unsigned long int echo)
 		
             struct sockaddr_in *ipv4 = (struct sockaddr_in *) &src_addr;
             addr = &(ipv4->sin_addr);
-            ipver = "IPv4";
 		
             inet_ntop(sin->sin_family, addr, ipstr, sizeof(ipstr));
 		

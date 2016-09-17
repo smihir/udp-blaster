@@ -1,7 +1,7 @@
 CC = gcc
 CSCOPE = cscope
 CFLAGS += -Wall -Werror
-LDFLAGS += -lpthread
+LDFLAGS += -pthread
 
 BLASTEE-OBJS := blastee.o \
 
